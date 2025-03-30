@@ -83,15 +83,16 @@ export function generatePDF(data) {
       head: [['CÓDIGO', 'SABERES', 'NOTA', 'FECHA', 'DESCRIPCIÓN']],
       body: activities,
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 15 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 85 },
+        0: { cellWidth: 18 }, // CÓDIGO
+        1: { cellWidth: 18 }, // SABERES
+        2: { cellWidth: 12 }, // NOTA
+        3: { cellWidth: 18 }, // FECHA
+        4: { cellWidth: 60 }, // DESCRIPCIÓN
       },
       headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
+      margin: { left: 10, right: 10 },
     });
     yPosition = doc.lastAutoTable.finalY + 10;
 
@@ -169,11 +170,11 @@ export function generatePDF(data) {
     ]);
 
     const rowColors = {
-      PROMEDIOS: [255, 182, 193],
+      PROMEDIOS: [255, 228, 127],
       PORCENTAJES: [255, 160, 122],
-      CÁLCULOS: [144, 238, 144],
+      CÁLCULOS: [176, 235, 39],
       'SUMA TOTALES': [135, 206, 250],
-      '70% SUMA TOTALES': [147, 112, 219],
+      '70% SUMA TOTALES': [215, 195, 252],
     };
 
     const titleColors = [
@@ -198,16 +199,17 @@ export function generatePDF(data) {
       ],
       body: calcBody,
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
       columnStyles: {
-        0: { cellWidth: 25 },
-        1: { cellWidth: 20 },
-        2: { cellWidth: 25 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 20 },
+        0: { cellWidth: 20 }, // CÓDIGO HACER
+        1: { cellWidth: 15 }, // HACER
+        2: { cellWidth: 20 }, // CÓDIGO SABER
+        3: { cellWidth: 15 }, // SABER
+        4: { cellWidth: 20 }, // CÓDIGO SER
+        5: { cellWidth: 15 }, // SER
       },
-      headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
+      headStyles: { fillColor: [0, 128, 128], textColor: [255, 255, 255] },
+      margin: { left: 10, right: 10 },
       didParseCell: (hookData) => {
         const rowLabel = hookData.row.raw[0];
         if (rowColors[rowLabel]) {
@@ -279,6 +281,7 @@ export function generatePDF(data) {
     `${(percentages.saber * 100).toFixed(0)}%`,
     '',
     `${(percentages.ser * 100).toFixed(0)}%`,
+    '',
   ]);
   generalCalcBody.push([
     'CÁLCULOS',
@@ -320,16 +323,17 @@ export function generatePDF(data) {
     ],
     body: generalCalcBody,
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 2, lineWidth: 1 },
+    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 20 },
-      2: { cellWidth: 25 },
-      3: { cellWidth: 20 },
-      4: { cellWidth: 25 },
-      5: { cellWidth: 20 },
+      0: { cellWidth: 20 }, // CÓDIGO HACER
+      1: { cellWidth: 15 }, // HACER
+      2: { cellWidth: 20 }, // CÓDIGO SABER
+      3: { cellWidth: 15 }, // SABER
+      4: { cellWidth: 20 }, // CÓDIGO SER
+      5: { cellWidth: 15 }, // SER
     },
     headStyles: { fillColor: [34, 139, 34], textColor: [255, 255, 255] },
+    margin: { left: 10, right: 10 },
     didParseCell: (hookData) => {
       const rowLabel = hookData.row.raw[0];
       if (generalRowColors[rowLabel]) {
@@ -354,8 +358,15 @@ export function generatePDF(data) {
       item.value || 'N/A',
     ]),
     theme: 'grid',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [0, 102, 204] },
+    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+    columnStyles: {
+      0: { cellWidth: 60 }, // Evaluación
+      1: { cellWidth: 20 }, // Nota
+      2: { cellWidth: 20 }, // Porcentaje
+      3: { cellWidth: 20 }, // Valor
+    },
+    headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+    margin: { left: 10, right: 10 },
   });
   yPosition = doc.lastAutoTable.finalY + 10;
 
@@ -373,15 +384,19 @@ export function generatePDF(data) {
       ['Nota Final Total', data.results.notaFinal || 'N/A'],
     ],
     theme: 'grid',
-    styles: { fontSize: 8, lineWidth: 0.5 },
-    headStyles: { fillColor: [0, 102, 204] },
+    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+    columnStyles: {
+      0: { cellWidth: 80 }, // Concepto
+      1: { cellWidth: 40 }, // Valor
+    },
+    headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+    margin: { left: 10, right: 10 },
     didParseCell: (hookData) => {
       if (hookData.row.raw[0] === 'Nota Final Total') {
-        hookData.cell.styles.fillColor = [255, 215, 0];
+        hookData.cell.styles.fillColor = [255, 255, 0];
         hookData.cell.styles.textColor = [255, 0, 0];
         hookData.cell.styles.fontStyle = 'bold';
         hookData.cell.styles.fontSize = 12;
-        hookData.cell.styles.lineWidth = 1.5;
       }
     },
   });
@@ -399,7 +414,6 @@ export function generatePDF(data) {
   if (yPosition <= footerY) {
     doc.text(footerText, 14, footerY);
   } else {
-    // Si el contenido excede el espacio disponible, se añade justo después
     doc.text(footerText, 14, yPosition + 10);
     console.warn(
       'El contenido excede el espacio de la página; el pie de página podría desbordarse.'

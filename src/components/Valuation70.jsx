@@ -143,10 +143,16 @@ function Valuation70({ units, dispatch }) {
         <Box key={`unit-${unitIndex}`} mb={6}>
           <HStack mb={4} align="center">
             <FormControl>
-              <FormLabel color="teal.600" fontWeight="bold">
+              <FormLabel
+                htmlFor={`unit-name-${unitIndex}`}
+                color="teal.600"
+                fontWeight="bold"
+              >
                 Unidad {unitIndex + 1}
               </FormLabel>
               <Input
+                id={`unit-name-${unitIndex}`}
+                name={`unit-name-${unitIndex}`}
                 value={unitName}
                 onChange={(e) => handleUnitNameChange(unitName, e.target.value)}
                 maxLength={200}
@@ -162,6 +168,7 @@ function Valuation70({ units, dispatch }) {
               size="sm"
               onClick={() => removeUnit(unitName)}
               isDisabled={unitCount === 1}
+              aria-label={`Eliminar ${unitName}`}
             />
           </HStack>
           <HStack spacing={4} align="start">
@@ -194,6 +201,8 @@ function Valuation70({ units, dispatch }) {
                               min={1}
                               max={5}
                               step={0.1}
+                              id={`${type}-note-${unitIndex}-${index}`}
+                              name={`${type}-note-${unitIndex}-${index}`}
                               value={val.note}
                               onChange={(e) =>
                                 handleChange(
@@ -224,6 +233,8 @@ function Valuation70({ units, dispatch }) {
                               placeholderText="dd/mm/aaaa"
                               customInput={
                                 <Input
+                                  id={`${type}-date-${unitIndex}-${index}`}
+                                  name={`${type}-date-${unitIndex}-${index}`}
                                   size="sm"
                                   bg={saberStyles[type].bg}
                                   borderColor={saberStyles[type].borderColor}
@@ -239,6 +250,8 @@ function Valuation70({ units, dispatch }) {
                         <Tr>
                           <Td colSpan={2}>
                             <Textarea
+                              id={`${type}-activity-${unitIndex}-${index}`}
+                              name={`${type}-activity-${unitIndex}-${index}`}
                               value={val.activity}
                               onChange={(e) =>
                                 handleChange(
@@ -269,6 +282,7 @@ function Valuation70({ units, dispatch }) {
                     icon={<AddIcon />}
                     size="sm"
                     onClick={() => addValuation(unitName, type)}
+                    aria-label={`Agregar valoración a ${type}`}
                   />
                   <IconButton
                     icon={<DeleteIcon />}
@@ -278,6 +292,7 @@ function Valuation70({ units, dispatch }) {
                       removeValuation(unitName, type, data[type].length - 1)
                     }
                     isDisabled={data[type].length === 1}
+                    aria-label={`Eliminar última valoración de ${type}`}
                   />
                 </HStack>
               </Box>
