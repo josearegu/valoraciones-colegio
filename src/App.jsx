@@ -19,7 +19,7 @@ const initialState = {
     periodo: 'PRIMERO',
     grado: '',
     asignatura: 'MATEMÁTICAS',
-    docente: 'JOSÉ LUÍS ARÉVALO GUANCHA',
+    docente: 'JOSÉ LUÍS',
     estudiante: '',
     estandarRelacionado: '', // Nuevo campo para "ESTÁNDAR RELACIONADO"
   },
@@ -88,7 +88,7 @@ function App() {
       <Box minH="100vh" w="100vw" p={6} bg="gray.50">
         <VStack spacing={6} align="stretch">
           <Heading textAlign="center" size="lg">
-            COLEGIO NUESTRA SEÑORA DE LAS LAJAS
+            COLEGIO NUESTRA SEÑORA DE LAS LAJAS 2025
           </Heading>
           <HStack justify="center" spacing={4}>
             <Text fontSize="md" fontWeight="bold">

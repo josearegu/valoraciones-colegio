@@ -113,7 +113,7 @@ function GeneralInfo({ data, dispatch }) {
             name="estandarRelacionado"
             value={data.estandarRelacionado}
             onChange={handleChange}
-            rows={2}
+            rows={3}
             resize="vertical"
             bg="blue.50"
             borderColor="blue.300"

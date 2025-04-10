@@ -7,7 +7,9 @@ export function exportToPDF(state, results) {
 
   // Header
   doc.setFontSize(16);
-  doc.text('COLEGIO NUESTRA SEÑORA DE LAS LAJAS', 105, 20, { align: 'center' });
+  doc.text('COLEGIO NUESTRA SEÑORA DE LAS LAJAS 2025', 105, 20, {
+    align: 'center',
+  });
   doc.setFontSize(12);
   doc.text('TABLA DE VALORACIONES 2025', 105, 30, { align: 'center' });
 

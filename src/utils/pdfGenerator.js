@@ -1,321 +1,199 @@
 // src/utils/pdfGenerator.js
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 export function generatePDF(data) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   let yPosition = 20;
 
-  // Encabezado
-  doc.setFontSize(16);
+  console.log('Datos recibidos:', data); // Depuración
+
+  // Configuración de fuente
+  doc.setFont('Helvetica');
+
+  // Encabezado mejorado
+  doc.setFontSize(18);
+  doc.setTextColor(0, 51, 102); // Azul oscuro institucional
   doc.text('COLEGIO NUESTRA SEÑORA DE LAS LAJAS', pageWidth / 2, yPosition, {
     align: 'center',
   });
-  yPosition += 10;
-
+  yPosition += 8;
   doc.setFontSize(12);
-  doc.text('VALORACIONES 2025', pageWidth / 2, yPosition, { align: 'center' });
+  doc.setTextColor(50, 50, 50); // Gris oscuro
+  doc.text('VALORACIONES ACADÉMICAS 2025', pageWidth / 2, yPosition, {
+    align: 'center',
+  });
+  yPosition += 10;
+  doc.setDrawColor(0, 51, 102);
+  doc.line(10, yPosition, pageWidth - 10, yPosition); // Línea divisoria
   yPosition += 10;
 
-  // Información general
+  // Información general en formato "tarjeta" (sin Estándar Relacionado)
+  doc.setFillColor(245, 245, 245); // Fondo gris claro
+  doc.rect(10, yPosition - 5, pageWidth - 20, 34, 'F'); // Ajustado altura
   doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
   doc.text(`Período: ${data.generalInfo.periodo || 'N/A'}`, 14, yPosition);
-  yPosition += 6;
-  doc.text(`Grado: ${data.generalInfo.grado || 'N/A'}`, 14, yPosition);
+  doc.text(`Grado: ${data.generalInfo.grado || 'N/A'}`, 100, yPosition);
   yPosition += 6;
   doc.text(
     `Asignatura: ${data.generalInfo.asignatura || 'N/A'}`,
     14,
     yPosition
   );
+  doc.text(`Docente: ${data.generalInfo.docente || 'N/A'}`, 100, yPosition);
   yPosition += 6;
-  doc.text(`Docente: ${data.generalInfo.docente || 'N/A'}`, 14, yPosition);
+  doc.text(
+    `FECHA DE INFORME: ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}`,
+    14,
+    yPosition
+  );
   yPosition += 6;
   doc.text(
     `Estudiante: ${data.generalInfo.estudiante || 'N/A'}`,
     14,
     yPosition
   );
-  yPosition += 6;
-  doc.text(
-    `Estándar Relacionado: ${data.generalInfo.estandarRelacionado || 'N/A'}`,
-    14,
-    yPosition,
-    { maxWidth: 180 }
-  );
-  yPosition += 10;
+  yPosition += 15;
 
-  // Cálculos por unidad
-  Object.entries(data.units).forEach(([unitName, unitData], index) => {
-    doc.setFontSize(12);
-    doc.text(`Unidad ${index + 1}: ${unitName || 'Sin nombre'}`, 14, yPosition);
-    yPosition += 6;
-
-    // Tabla de actividades (CÓDIGO, SABERES, NOTA, FECHA, DESCRIPCIÓN)
-    const activities = [
-      ...unitData.hacer.map((item) => [
-        item.code,
-        'Hacer',
-        item.note || 'N/A',
-        item.date || 'N/A',
-        item.activity || 'N/A',
-      ]),
-      ...unitData.saber.map((item) => [
-        item.code,
-        'Saber',
-        item.note || 'N/A',
-        item.date || 'N/A',
-        item.activity || 'N/A',
-      ]),
-      ...unitData.ser.map((item) => [
-        item.code,
-        'Ser',
-        item.note || 'N/A',
-        item.date || 'N/A',
-        item.activity || 'N/A',
-      ]),
-    ];
-
-    doc.autoTable({
-      startY: yPosition,
-      head: [['CÓDIGO', 'SABERES', 'NOTA', 'FECHA', 'DESCRIPCIÓN']],
-      body: activities,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-      columnStyles: {
-        0: { cellWidth: 18 }, // CÓDIGO
-        1: { cellWidth: 18 }, // SABERES
-        2: { cellWidth: 12 }, // NOTA
-        3: { cellWidth: 18 }, // FECHA
-        4: { cellWidth: 60 }, // DESCRIPCIÓN
-      },
-      headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255] },
-      margin: { left: 10, right: 10 },
-    });
-    yPosition = doc.lastAutoTable.finalY + 10;
-
-    // Tabla de cálculos (CÓDIGO HACER, HACER, CÓDIGO SABER, SABER, CÓDIGO SER, SER)
-    const unitCalculations = data.calculations.units[unitName];
-    const percentages = getPercentages(data.generalInfo.asignatura);
-
-    const maxRows = Math.max(
-      unitCalculations.hacer.length,
-      unitCalculations.saber.length,
-      unitCalculations.ser.length
-    );
-    const calcBody = [];
-
-    for (let i = 0; i < maxRows; i++) {
-      const row = [
-        unitCalculations.hacer[i]?.code || '',
-        unitCalculations.hacer[i]?.note &&
-        !isNaN(parseFloat(unitCalculations.hacer[i].note))
-          ? parseFloat(unitCalculations.hacer[i].note).toFixed(2)
-          : '',
-        unitCalculations.saber[i]?.code || '',
-        unitCalculations.saber[i]?.note &&
-        !isNaN(parseFloat(unitCalculations.saber[i].note))
-          ? parseFloat(unitCalculations.saber[i].note).toFixed(2)
-          : '',
-        unitCalculations.ser[i]?.code || '',
-        unitCalculations.ser[i]?.note &&
-        !isNaN(parseFloat(unitCalculations.ser[i].note))
-          ? parseFloat(unitCalculations.ser[i].note).toFixed(2)
-          : '',
-      ];
-      calcBody.push(row);
-    }
-
-    calcBody.push([
-      'PROMEDIOS',
-      unitCalculations.promedio.hacer,
-      '',
-      unitCalculations.promedio.saber,
-      '',
-      unitCalculations.promedio.ser,
-    ]);
-    calcBody.push([
-      'PORCENTAJES',
-      `${(percentages.hacer * 100).toFixed(0)}%`,
-      '',
-      `${(percentages.saber * 100).toFixed(0)}%`,
-      '',
-      `${(percentages.ser * 100).toFixed(0)}%`,
-    ]);
-    calcBody.push([
-      'CÁLCULOS',
-      (unitCalculations.promedio.hacer * percentages.hacer).toFixed(2),
-      '',
-      (unitCalculations.promedio.saber * percentages.saber).toFixed(2),
-      '',
-      (unitCalculations.promedio.ser * percentages.ser).toFixed(2),
-    ]);
-    calcBody.push([
-      'SUMA TOTALES',
-      unitCalculations.sumaTotales,
-      '',
-      '',
-      '',
-      '',
-    ]);
-    calcBody.push([
-      '70% SUMA TOTALES',
-      unitCalculations.sumaTotales70,
-      '',
-      '',
-      '',
-      '',
-    ]);
-
-    const rowColors = {
-      PROMEDIOS: [255, 228, 127],
-      PORCENTAJES: [255, 160, 122],
-      CÁLCULOS: [176, 235, 39],
-      'SUMA TOTALES': [135, 206, 250],
-      '70% SUMA TOTALES': [215, 195, 252],
-    };
-
-    const titleColors = [
-      [255, 69, 0],
-      [34, 139, 34],
-      [138, 43, 226],
-      [255, 215, 0],
-      [0, 191, 255],
-    ];
-    const titleColor = titleColors[index % titleColors.length];
-
-    doc.setFontSize(12);
-    doc.setTextColor(...titleColor);
-    doc.text(`Cálculos de Unidad ${index + 1}`, 14, yPosition);
-    doc.setTextColor(0, 0, 0);
-    yPosition += 6;
-
-    doc.autoTable({
-      startY: yPosition,
-      head: [
-        ['CÓDIGO HACER', 'HACER', 'CÓDIGO SABER', 'SABER', 'CÓDIGO SER', 'SER'],
-      ],
-      body: calcBody,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-      columnStyles: {
-        0: { cellWidth: 20 }, // CÓDIGO HACER
-        1: { cellWidth: 15 }, // HACER
-        2: { cellWidth: 20 }, // CÓDIGO SABER
-        3: { cellWidth: 15 }, // SABER
-        4: { cellWidth: 20 }, // CÓDIGO SER
-        5: { cellWidth: 15 }, // SER
-      },
-      headStyles: { fillColor: [0, 128, 128], textColor: [255, 255, 255] },
-      margin: { left: 10, right: 10 },
-      didParseCell: (hookData) => {
-        const rowLabel = hookData.row.raw[0];
-        if (rowColors[rowLabel]) {
-          hookData.cell.styles.fillColor = rowColors[rowLabel];
-        }
-      },
-    });
-    yPosition = doc.lastAutoTable.finalY + 10;
-
-    if (yPosition > 250) {
-      doc.addPage();
-      yPosition = 20;
-    }
+  /// Tabla para "Estándar Relacionado" con salto de línea
+  if (yPosition > pageHeight - 40) {
+    doc.addPage();
+    yPosition = 20;
+  }
+  doc.autoTable({
+    startY: yPosition,
+    head: [['ESTÁNDAR RELACIONADO']],
+    body: [[data.generalInfo.estandarRelacionado || 'N/A']],
+    theme: 'grid',
+    styles: {
+      fontSize: 10,
+      cellPadding: 2,
+      overflow: 'linebreak', // Permite salto de línea automático
+      minCellHeight: 0, // Asegura que la celda crezca según el contenido
+    },
+    headStyles: {
+      fillColor: [0, 51, 102],
+      textColor: [255, 255, 255],
+    },
+    columnStyles: {
+      0: { cellWidth: pageWidth - 20 }, // Ancho completo menos márgenes
+    },
+    margin: { left: 10, right: 10 },
   });
+  yPosition = doc.lastAutoTable.finalY + 10;
 
-  // Nueva página para las secciones finales
-  doc.addPage();
-  yPosition = 20;
+  // Unidades
+  if (data.units && Object.keys(data.units).length > 0) {
+    Object.entries(data.units).forEach(([unitName, unitData], index) => {
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
 
-  // Sección: Cálculos Generales
+      doc.setFontSize(12);
+      doc.setTextColor(0, 51, 102);
+      doc.text(
+        `Unidad ${index + 1}: ${unitName || 'Sin nombre'}`,
+        14,
+        yPosition
+      );
+      yPosition += 6;
+
+      const activities = [
+        ...(unitData.hacer || []).map((item) => [
+          item.code || 'N/A',
+          'Hacer',
+          item.note || 'N/A',
+          item.date || 'N/A',
+          item.activity || 'N/A',
+        ]),
+        ...(unitData.saber || []).map((item) => [
+          item.code || 'N/A',
+          'Saber',
+          item.note || 'N/A',
+          item.date || 'N/A',
+          item.activity || 'N/A',
+        ]),
+        ...(unitData.ser || []).map((item) => [
+          item.code || 'N/A',
+          'Ser',
+          item.note || 'N/A',
+          item.date || 'N/A',
+          item.activity || 'N/A',
+        ]),
+      ];
+
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.autoTable({
+        startY: yPosition,
+        head: [['CÓDIGO', 'SABERES', 'NOTA', 'FECHA', 'DESCRIPCIÓN']],
+        body:
+          activities.length > 0
+            ? activities
+            : [['N/A', 'N/A', 'N/A', 'N/A', 'N/A']],
+        theme: 'striped',
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
+        margin: { left: 10, right: 10 },
+      });
+      yPosition = doc.lastAutoTable.finalY + 10;
+
+      // Tabla de cálculos por unidad
+      const unitCalculations = data.calculations?.units?.[unitName] || {};
+      const percentages = getPercentages(data.generalInfo?.asignatura);
+      const calcBody = buildCalculationTable(unitCalculations, percentages);
+
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 20;
+      }
+      doc.setFontSize(12);
+      doc.text(`Cálculos de Unidad ${index + 1}`, 14, yPosition);
+      yPosition += 6;
+
+      doc.autoTable({
+        startY: yPosition,
+        head: [
+          [
+            'CÓDIGO HACER',
+            'HACER',
+            'CÓDIGO SABER',
+            'SABER',
+            'CÓDIGO SER',
+            'SER',
+          ],
+        ],
+        body: calcBody,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
+        margin: { left: 10, right: 10 },
+        didParseCell: applyRowColors,
+      });
+      yPosition = doc.lastAutoTable.finalY + 10;
+    });
+  }
+
+  // Cálculos Generales
+  if (yPosition > pageHeight - 40) {
+    doc.addPage();
+    yPosition = 20;
+  }
   doc.setFontSize(12);
+  doc.setTextColor(0, 51, 102);
   doc.text('Cálculos Generales', 14, yPosition);
   yPosition += 6;
 
-  const allHacer = [];
-  const allSaber = [];
-  const allSer = [];
-
-  for (const [, unitData] of Object.entries(data.units)) {
-    allHacer.push(...unitData.hacer);
-    allSaber.push(...unitData.saber);
-    allSer.push(...unitData.ser);
-  }
-
-  const maxRows = Math.max(allHacer.length, allSaber.length, allSer.length);
-  const generalCalcBody = [];
-
-  for (let i = 0; i < maxRows; i++) {
-    const row = [
-      allHacer[i]?.code || '',
-      allHacer[i]?.note && !isNaN(parseFloat(allHacer[i].note))
-        ? parseFloat(allHacer[i].note).toFixed(2)
-        : '',
-      allSaber[i]?.code || '',
-      allSaber[i]?.note && !isNaN(parseFloat(allSaber[i].note))
-        ? parseFloat(allSaber[i].note).toFixed(2)
-        : '',
-      allSer[i]?.code || '',
-      allSer[i]?.note && !isNaN(parseFloat(allSer[i].note))
-        ? parseFloat(allSer[i].note).toFixed(2)
-        : '',
-    ];
-    generalCalcBody.push(row);
-  }
-
-  const percentages = getPercentages(data.generalInfo.asignatura);
-  generalCalcBody.push([
-    'PROMEDIOS',
-    data.calculations.general.promedio.hacer,
-    '',
-    data.calculations.general.promedio.saber,
-    '',
-    data.calculations.general.promedio.ser,
-  ]);
-  generalCalcBody.push([
-    'PORCENTAJES',
-    `${(percentages.hacer * 100).toFixed(0)}%`,
-    '',
-    `${(percentages.saber * 100).toFixed(0)}%`,
-    '',
-    `${(percentages.ser * 100).toFixed(0)}%`,
-    '',
-  ]);
-  generalCalcBody.push([
-    'CÁLCULOS',
-    data.calculations.general.total.hacer,
-    '',
-    data.calculations.general.total.saber,
-    '',
-    data.calculations.general.total.ser,
-  ]);
-  generalCalcBody.push([
-    'SUMA TOTALES',
-    data.calculations.general.sumaTotales,
-    '',
-    '',
-    '',
-    '',
-  ]);
-  generalCalcBody.push([
-    '70% SUMA TOTALES',
-    data.calculations.general.sumaTotales70,
-    '',
-    '',
-    '',
-    '',
-  ]);
-
-  const generalRowColors = {
-    PROMEDIOS: [255, 255, 153],
-    PORCENTAJES: [255, 204, 153],
-    CÁLCULOS: [204, 255, 204],
-    'SUMA TOTALES': [153, 204, 255],
-    '70% SUMA TOTALES': [204, 153, 255],
-  };
-
+  const generalCalcBody = buildCalculationTable(
+    data.calculations?.general || {},
+    getPercentages(data.generalInfo?.asignatura)
+  );
   doc.autoTable({
     startY: yPosition,
     head: [
@@ -324,26 +202,17 @@ export function generatePDF(data) {
     body: generalCalcBody,
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-    columnStyles: {
-      0: { cellWidth: 20 }, // CÓDIGO HACER
-      1: { cellWidth: 15 }, // HACER
-      2: { cellWidth: 20 }, // CÓDIGO SABER
-      3: { cellWidth: 15 }, // SABER
-      4: { cellWidth: 20 }, // CÓDIGO SER
-      5: { cellWidth: 15 }, // SER
-    },
-    headStyles: { fillColor: [34, 139, 34], textColor: [255, 255, 255] },
+    headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
     margin: { left: 10, right: 10 },
-    didParseCell: (hookData) => {
-      const rowLabel = hookData.row.raw[0];
-      if (generalRowColors[rowLabel]) {
-        hookData.cell.styles.fillColor = generalRowColors[rowLabel];
-      }
-    },
+    didParseCell: applyRowColors,
   });
   yPosition = doc.lastAutoTable.finalY + 10;
 
-  // Sección: Valoraciones Adicionales (30%)
+  // Valoraciones Adicionales
+  if (yPosition > pageHeight - 40) {
+    doc.addPage();
+    yPosition = 20;
+  }
   doc.setFontSize(12);
   doc.text('Valoraciones Adicionales (30%)', 14, yPosition);
   yPosition += 6;
@@ -351,26 +220,24 @@ export function generatePDF(data) {
   doc.autoTable({
     startY: yPosition,
     head: [['Evaluación', 'Nota', 'Porcentaje', 'Valor']],
-    body: data.additional.map((item) => [
-      item.evaluation,
+    body: (data.additional || []).map((item) => [
+      item.evaluation || 'N/A',
       item.note || 'N/A',
-      item.percentage,
+      item.percentage || 'N/A',
       item.value || 'N/A',
     ]),
-    theme: 'grid',
+    theme: 'striped',
     styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-    columnStyles: {
-      0: { cellWidth: 60 }, // Evaluación
-      1: { cellWidth: 20 }, // Nota
-      2: { cellWidth: 20 }, // Porcentaje
-      3: { cellWidth: 20 }, // Valor
-    },
-    headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+    headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
     margin: { left: 10, right: 10 },
   });
   yPosition = doc.lastAutoTable.finalY + 10;
 
-  // Sección: Resultados Finales
+  // Resultados Finales
+  if (yPosition > pageHeight - 40) {
+    doc.addPage();
+    yPosition = 20;
+  }
   doc.setFontSize(12);
   doc.text('Resultados Finales', 14, yPosition);
   yPosition += 6;
@@ -379,54 +246,147 @@ export function generatePDF(data) {
     startY: yPosition,
     head: [['Concepto', 'Valor']],
     body: [
-      ['Nota Final 70%', data.results.notaFinal70 || 'N/A'],
-      ['Valoraciones Finales 30%', data.results.valoracionesFinales30 || 'N/A'],
-      ['Nota Final Total', data.results.notaFinal || 'N/A'],
+      ['Nota Final 70%', data.results?.notaFinal70 || 'N/A'],
+      [
+        'Valoraciones Finales 30%',
+        data.results?.valoracionesFinales30 || 'N/A',
+      ],
+      ['Nota Final Total', data.results?.notaFinal || 'N/A'],
     ],
     theme: 'grid',
     styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-    columnStyles: {
-      0: { cellWidth: 80 }, // Concepto
-      1: { cellWidth: 40 }, // Valor
-    },
-    headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+    headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
     margin: { left: 10, right: 10 },
     didParseCell: (hookData) => {
       if (hookData.row.raw[0] === 'Nota Final Total') {
-        hookData.cell.styles.fillColor = [255, 255, 0];
-        hookData.cell.styles.textColor = [255, 0, 0];
+        hookData.cell.styles.fillColor = [255, 215, 0];
+        hookData.cell.styles.textColor = [0, 51, 102];
         hookData.cell.styles.fontStyle = 'bold';
-        hookData.cell.styles.fontSize = 12;
       }
     },
   });
   yPosition = doc.lastAutoTable.finalY + 10;
 
-  // Añadir pie de página
-  const footerText = 'autor: josearegu@gmail.com';
-  const footerFontSize = 8;
-  doc.setFontSize(footerFontSize);
-  const footerHeight = footerFontSize * 1.2; // Estimación de la altura del texto
-  const pageHeight = doc.internal.pageSize.height;
-  const footerY = pageHeight - footerHeight - 5; // 5 puntos de margen desde el fondo
-
-  // Asegurarse de que el pie de página no se superponga con el contenido
-  if (yPosition <= footerY) {
-    doc.text(footerText, 14, footerY);
-  } else {
-    doc.text(footerText, 14, yPosition + 10);
-    console.warn(
-      'El contenido excede el espacio de la página; el pie de página podría desbordarse.'
-    );
+  // Pie de página en todas las páginas
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Página ${i} de ${pageCount}`, pageWidth - 30, pageHeight - 10, {
+      align: 'right',
+    });
+    doc.text('autor: josearegu@gmail.com', 14, pageHeight - 10);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(10, pageHeight - 15, pageWidth - 10, pageHeight - 15); // Línea divisoria sutil
   }
 
   // Guardar el PDF
-  doc.save(
-    `Valoraciones_${data.generalInfo.estudiante || 'Estudiante'}_${data.generalInfo.asignatura}.pdf`
-  );
+  try {
+    doc.save(
+      `Valoraciones_${data.generalInfo?.estudiante || 'Estudiante'}_${data.generalInfo?.asignatura || 'Asignatura'}.pdf`
+    );
+    console.log('PDF generado exitosamente');
+  } catch (error) {
+    console.error('Error al guardar el PDF:', error);
+  }
 }
 
-// Función para obtener los porcentajes (copiada de calculations.js para evitar errores)
+// Función auxiliar para construir tablas de cálculos
+function buildCalculationTable(calculations, percentages) {
+  const maxRows = Math.max(
+    (calculations.hacer || []).length,
+    (calculations.saber || []).length,
+    (calculations.ser || []).length
+  );
+  const calcBody = [];
+
+  for (let i = 0; i < maxRows; i++) {
+    calcBody.push([
+      calculations.hacer?.[i]?.code || '',
+      calculations.hacer?.[i]?.note &&
+      !isNaN(parseFloat(calculations.hacer[i].note))
+        ? parseFloat(calculations.hacer[i].note).toFixed(2)
+        : '',
+      calculations.saber?.[i]?.code || '',
+      calculations.saber?.[i]?.note &&
+      !isNaN(parseFloat(calculations.saber[i].note))
+        ? parseFloat(calculations.saber[i].note).toFixed(2)
+        : '',
+      calculations.ser?.[i]?.code || '',
+      calculations.ser?.[i]?.note &&
+      !isNaN(parseFloat(calculations.ser[i].note))
+        ? parseFloat(calculations.ser[i].note).toFixed(2)
+        : '',
+    ]);
+  }
+
+  calcBody.push([
+    'PROMEDIOS',
+    calculations.promedio?.hacer || 'N/A',
+    '',
+    calculations.promedio?.saber || 'N/A',
+    '',
+    calculations.promedio?.ser || 'N/A',
+  ]);
+  calcBody.push([
+    'PORCENTAJES',
+    `${(percentages.hacer * 100).toFixed(0)}%`,
+    '',
+    `${(percentages.saber * 100).toFixed(0)}%`,
+    '',
+    `${(percentages.ser * 100).toFixed(0)}%`,
+  ]);
+  calcBody.push([
+    'CÁLCULOS',
+    calculations.total?.hacer ||
+      (calculations.promedio?.hacer * percentages.hacer).toFixed(2) ||
+      'N/A',
+    '',
+    calculations.total?.saber ||
+      (calculations.promedio?.saber * percentages.saber).toFixed(2) ||
+      'N/A',
+    '',
+    calculations.total?.ser ||
+      (calculations.promedio?.ser * percentages.ser).toFixed(2) ||
+      'N/A',
+  ]);
+  calcBody.push([
+    'SUMA TOTALES',
+    calculations.sumaTotales || 'N/A',
+    '',
+    '',
+    '',
+    '',
+  ]);
+  calcBody.push([
+    '70% SUMA TOTALES',
+    calculations.sumaTotales70 || 'N/A',
+    '',
+    '',
+    '',
+    '',
+  ]);
+
+  return calcBody;
+}
+
+// Aplicar colores a filas específicas
+function applyRowColors(hookData) {
+  const rowColors = {
+    PROMEDIOS: [230, 230, 250],
+    PORCENTAJES: [245, 222, 179],
+    CÁLCULOS: [144, 238, 144],
+    'SUMA TOTALES': [173, 216, 230],
+    '70% SUMA TOTALES': [221, 160, 221],
+  };
+  const rowLabel = hookData.row.raw[0];
+  if (rowColors[rowLabel]) {
+    hookData.cell.styles.fillColor = rowColors[rowLabel];
+  }
+}
+
+// Función de porcentajes
 const percentagesBySubject = {
   TECNOLOGIA_E_INFORMATICA: { saber: 0.3, hacer: 0.4, ser: 0.3 },
   CIENCIAS_NATURALES: { saber: 0.4, hacer: 0.3, ser: 0.3 },
