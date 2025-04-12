@@ -154,4 +154,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+index.html
 >>>>>>> 6badd96 (Initial commit)
